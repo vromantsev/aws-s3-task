@@ -29,6 +29,7 @@ import ua.reed.aws.s3.dto.ObjectInfoDto;
 import ua.reed.aws.s3.enums.PreSignedUrlOperationType;
 import ua.reed.aws.s3.service.ObjectService;
 import ua.reed.aws.s3.service.PreSignedUrlService;
+import ua.reed.aws.s3.service.model.PreSignedUrlOptions;
 import ua.reed.aws.s3.utils.S3Utils;
 
 import java.io.ByteArrayOutputStream;
@@ -63,11 +64,21 @@ public class S3ObjectService implements ObjectService {
         }
     }
 
+    /**
+     * This one doesn't work, returns "Cannot upload file. Status: 403, details: Forbidden"
+     */
     @Override
     public void createObjectByPreSignedUrl(final String bucketName, final String objectKey, final MultipartFile multipartFile) {
         S3Utils.validateBucketName(bucketName);
         S3Utils.validateObjectKey(objectKey);
-        URL preSignedUrl = this.preSignedUrlService.generatePreSignedUrlForObject(bucketName, objectKey, PreSignedUrlOperationType.DELETE_OBJECT);
+        URL preSignedUrl = this.preSignedUrlService.generatePreSignedUrlForObject(
+                PreSignedUrlOptions.builder()
+                        .objectKey(objectKey)
+                        .bucketName(bucketName)
+                        .operationType(PreSignedUrlOperationType.PUT_OBJECT)
+                        .multipartFile(multipartFile)
+                        .build()
+        );
         try (SdkHttpClient httpClient = ApacheHttpClient.create()) {
             HttpExecuteRequest request = HttpExecuteRequest.builder()
                     .request(
@@ -142,7 +153,13 @@ public class S3ObjectService implements ObjectService {
     public byte[] getObjectFromPreSignedUrl(final String bucketName, final String objectKey) {
         S3Utils.validateBucketName(bucketName);
         S3Utils.validateObjectKey(objectKey);
-        URL preSignedUrl = this.preSignedUrlService.generatePreSignedUrlForObject(bucketName, objectKey, PreSignedUrlOperationType.GET_OBJECT);
+        URL preSignedUrl = this.preSignedUrlService.generatePreSignedUrlForObject(
+                PreSignedUrlOptions.builder()
+                        .objectKey(objectKey)
+                        .bucketName(bucketName)
+                        .operationType(PreSignedUrlOperationType.GET_OBJECT)
+                        .build()
+        );
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (SdkHttpClient httpClient = ApacheHttpClient.create()) {
             HttpExecuteRequest request = HttpExecuteRequest.builder()
@@ -191,7 +208,13 @@ public class S3ObjectService implements ObjectService {
     public void deleteObjectByPreSignedUrl(final String bucketName, final String objectKey) {
         S3Utils.validateBucketName(bucketName);
         S3Utils.validateObjectKey(objectKey);
-        URL preSignedUrl = this.preSignedUrlService.generatePreSignedUrlForObject(bucketName, objectKey, PreSignedUrlOperationType.DELETE_OBJECT);
+        URL preSignedUrl = this.preSignedUrlService.generatePreSignedUrlForObject(
+                PreSignedUrlOptions.builder()
+                        .objectKey(objectKey)
+                        .bucketName(bucketName)
+                        .operationType(PreSignedUrlOperationType.DELETE_OBJECT)
+                        .build()
+        );
         try (SdkHttpClient httpClient = ApacheHttpClient.create()) {
             HttpExecuteRequest request = HttpExecuteRequest.builder()
                     .request(

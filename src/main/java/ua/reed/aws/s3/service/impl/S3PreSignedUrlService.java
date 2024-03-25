@@ -7,8 +7,8 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedDeleteObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
-import ua.reed.aws.s3.enums.PreSignedUrlOperationType;
 import ua.reed.aws.s3.service.PreSignedUrlService;
+import ua.reed.aws.s3.service.model.PreSignedUrlOptions;
 import ua.reed.aws.s3.utils.S3Utils;
 
 import java.net.URL;
@@ -22,18 +22,20 @@ public class S3PreSignedUrlService implements PreSignedUrlService {
     private final S3Presigner s3Presigner;
 
     @Override
-    public URL generatePreSignedUrlForObject(final String bucketName, final String objectKey, final PreSignedUrlOperationType operationType) {
+    public URL generatePreSignedUrlForObject(final PreSignedUrlOptions options) {
+        String bucketName = options.getBucketName();
         S3Utils.validateBucketName(bucketName);
+        String objectKey = options.getObjectKey();
         S3Utils.validateObjectKey(objectKey);
         try {
             URL preSignedUrl = null;
-            switch (operationType) {
+            switch (options.getOperationType()) {
                 case GET_OBJECT -> {
                     PresignedGetObjectRequest request = s3Presigner.presignGetObject(S3Utils.buildPreSignedGetObjectRequest(bucketName, objectKey));
                     preSignedUrl = request.url();
                 }
                 case PUT_OBJECT -> {
-                    PresignedPutObjectRequest request = s3Presigner.presignPutObject(S3Utils.buildPreSignedPutObjectRequest(bucketName, objectKey));
+                    PresignedPutObjectRequest request = s3Presigner.presignPutObject(S3Utils.buildPreSignedPutObjectRequest(options));
                     preSignedUrl = request.url();
                 }
                 case DELETE_OBJECT -> {
